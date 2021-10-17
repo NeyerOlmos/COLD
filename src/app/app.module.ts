@@ -18,7 +18,7 @@ import { ColdDashboardComponent } from './cold-dashboard/cold-dashboard.componen
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

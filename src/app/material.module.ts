@@ -44,6 +44,7 @@ import {MatTreeModule} from '@angular/material/tree';
 import {OverlayModule} from '@angular/cdk/overlay';
 import { LayoutModule } from '@angular/cdk/layout';
 import { MatFormFieldModule} from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   exports: [
@@ -93,6 +94,7 @@ import { MatFormFieldModule} from '@angular/material/form-field';
     ScrollingModule,
     LayoutModule,
     MatFormFieldModule,
+    FormsModule
   ]
 })
 export class MaterialModule { }
