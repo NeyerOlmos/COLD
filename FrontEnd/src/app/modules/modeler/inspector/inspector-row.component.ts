@@ -4,7 +4,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 @Component({
   selector: 'app-inspector-row',
   templateUrl: './inspector-row.component.html',
-  styleUrls: ['./inspector-row.component.css']
+  styleUrls: ['./inspector-row.component.scss']
 })
 export class InspectorRowComponent {
 
