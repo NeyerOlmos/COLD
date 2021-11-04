@@ -8,12 +8,14 @@ import { DiagramComponent,GojsAngularModule,OverviewComponent,PaletteComponent }
 import { InspectorComponent } from './inspector/inspector.component';
 import { InspectorRowComponent } from './inspector/inspector-row.component';
 import { MaterialModule } from 'src/app/material.module';
+import { TestDiagramComponent } from './test-diagram/test-diagram.component';
 
 @NgModule({
   declarations: [
     ModelerComponent,
     InspectorComponent,
     InspectorRowComponent,
+    TestDiagramComponent,
    
   ],
   imports: [

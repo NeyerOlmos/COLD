@@ -17,18 +17,18 @@ io.on('connection', (socket) => {
     
     socket.join(nameRoom);
     
-    console.log(`Hola dispositivo: ${idHandShake} se unio --> ${nameRoom}`)
+    console.log(`Hola dispositivo: ${idHandShake} se unio a la sala --> ${nameRoom}`)
     
     socket.on('event', (res) =>{
         const data = res;
-        console.log(res);
+        //console.log(res);
 
         socket.to(nameRoom).emit('event', data);
     })
-    socket.on('gojsEvent',(res)=>{
-        const data = res;
-        console.log(res);
 
+    socket.on('eventModeler',(res)=>{
+        const data = res;
+        socket.to(nameRoom).emit('eventModeler', data);
     })
 
 })

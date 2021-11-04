@@ -1,0 +1,24 @@
+<!-- use go-debug.js when developing and go.js when deploying -->
+<script src="go-debug.js"></script>
+<script src="https://unpkg.com/gojs/release/go-debug.js"></script>
+<!-- The DIV for a Diagram needs an explicit size or else we will not see anything.
+     In this case we also add a background color so we can see that area. -->
+     <div id="myDiagramDiv"
+     style="width:400px; height:150px; background-color: #DAE4E4;"></div>
+
+     <script>
+         var $ = go.GraphObject.make;
+
+        var diagram = $(go.Diagram, "myDiagramDiv");
+
+        console.log(diagram)
+        diagram.add(
+        $(go.Node, go.Panel.Auto,
+            $(go.Shape,
+            { figure: "RoundedRectangle",
+                fill: "lightblue" }),
+            $(go.TextBlock,
+            { text: "Hello!",
+                margin: 5 })
+        ));
+     </script>

@@ -29,5 +29,5 @@ export class SocketWebService extends Socket {
   emitEvent = (payload = {} )=>{
     this.ioSocket.emit('event', payload);
   }
-
+  
 }
