@@ -1,7 +1,8 @@
 import { Injectable, EventEmitter } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
 import { Socket } from 'ngx-socket-io';
-
+import { environment } from 'src/environments/environment.prod';
+const apiUrl = environment.apiUrl;
 @Injectable({
   providedIn: 'root'
 })
@@ -11,7 +12,7 @@ export class SocketWebService extends Socket {
 
   constructor(private cookieService:CookieService) {
     super({
-      url: 'http://localhost:5000',
+      url: apiUrl,
       options: {
           query: {
             nameRoom: cookieService.get('room')

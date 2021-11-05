@@ -1,7 +1,14 @@
-<h1>GoJS / Angular - FlowChart</h1>
+<h1>Component Diagram</h1>
+<!-- <button mat-raised-button (click)="showJsonDiagram()"> show diagram</button>
 <button mat-raised-button (click)="getJsonDiagram()"> save diagram</button>
 <button mat-raised-button (click)="loadJsonDiagram()"> load diagram</button>
-<button mat-raised-button (click)="emitJsonDiagram()"> emit diagram</button>
+<button mat-raised-button (click)="emitJsonDiagram()"> emit diagram</button> -->
+<a download="diagram.json" [href]="dataUri">
+  <button mat-raised-button color="primary"> export diagram</button>
+</a>
+<input style="display: none" type="file" accept=".json" 
+       (change)="onFileLoad($event)" #fileinput>
+  <button mat-raised-button type="button" (click)="fileinput.click()"> load </button>
 <div class="left">
   General
   <gojs-palette #myPalette [initPalette]='initPalette' [divClassName]='paletteDivClassName' [nodeDataArray]='state.paletteNodeData'
@@ -10,8 +17,8 @@
 
 <div class="left">
   Diagram
-  <gojs-diagram #myDiagram [(skipsDiagramUpdate)]='state.skipsDiagramUpdate' [initDiagram]='initDiagram' [nodeDataArray]='state.diagramNodeData' [linkDataArray]='state.diagramLinkData'
-    [divClassName]='diagramDivClassName' [modelData]='state.diagramModelData' 
+  <gojs-diagram #myDiagram [(skipsDiagramUpdate)]='state.skipsDiagramUpdate' [initDiagram]='initDiagram' [(nodeDataArray)]='state.diagramNodeData' [(linkDataArray)]='state.diagramLinkData'
+    [divClassName]='diagramDivClassName' [(modelData)]='state.diagramModelData' 
     (modelChange)='diagramModelChange($event)'>
   </gojs-diagram>
   

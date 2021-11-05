@@ -9,7 +9,7 @@ import { ColdNavComponent } from './cold-nav/cold-nav.component';
 import { ColdDashboardComponent } from './cold-dashboard/cold-dashboard.component';
 import { CookieService } from 'ngx-cookie-service';
 import { PinturilloModule } from './modules/pinturillo/pinturillo.module';
-
+import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 @NgModule({
   declarations: [
     AppComponent,
@@ -23,7 +23,7 @@ import { PinturilloModule } from './modules/pinturillo/pinturillo.module';
     MaterialModule,
     PinturilloModule
   ],
-  providers: [CookieService],
+  providers: [CookieService, {provide: LocationStrategy, useClass: HashLocationStrategy}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,19 +1,22 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild, ViewEncapsulation  } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import * as go from 'gojs';
 import { DataSyncService, DiagramComponent, PaletteComponent } from 'gojs-angular';
 import produce from "immer";
 import { CookieService } from 'ngx-cookie-service';
 import { DiagramLinkData } from 'src/app/models/diagram-link-data';
+import { DiagramModelData } from 'src/app/models/diagram-model-data';
 import { DiagramNodeData } from 'src/app/models/diagram-node-data';
-import { ModelerWebSocketService } from './modeler-web-socket.service';
+import { ModelerWebSocketService } from '../modeler-web-socket.service';
 @Component({
-  selector: 'app-modeler',
-  templateUrl: './modeler.component.html',
-  styleUrls: ['./modeler.component.scss'],
+  selector: 'app-container-modeler',
+  templateUrl: './container-modeler.component.html',
+  styleUrls: ['./container-modeler.component.scss'],
   encapsulation: ViewEncapsulation.ShadowDom
 })
-export class ModelerComponent implements OnInit {
+
+export class ContainerModelerComponent implements OnInit {
   
   @ViewChild('myDiagram', { static: true }) public myDiagramComponent!: DiagramComponent;
   @ViewChild('myPalette', { static: true }) public myPaletteComponent!: PaletteComponent;
@@ -24,38 +27,63 @@ export class ModelerComponent implements OnInit {
   // As of gojs-angular 2.0, immutability is expected and required of state for ease of change detection.
   // Whenever updating state, immutability must be preserved. It is recommended to use immer for this, a small package that makes working with immutable data easy.
   public state = {
-    diagramNodeData: [],
-    diagramLinkData: [],
-    diagramModelData: { prop: 'value' },
-    skipsDiagramUpdate: false,
-    selectedNodeData: {id:'',text:'',color:''}, // used by InspectorComponent
+    diagramNodeData: new Array<go.ObjectData>(),
+    diagramLinkData:  new Array<go.ObjectData>(),
+    diagramModelData:  new DiagramModelData(),
+    skipsDiagramUpdate: true,
+    selectedNodeData: {key:'App'}, // used by InspectorComponent
 
     // Palette state props
     paletteNodeData: [
-      { key:"App",
+      { id:-1,
+        key:"App",
         source:"./../../../../assets/img/application.png",
         width: 55, 
         height: 55,
-        alignmentText: new go.Spot(0.5,1,0, 20),
+        alignmentText: new go.Spot(0.5,1, 0, 20),
+        positionText: new go.Point(0,100),
         zOrder:0,
-        // position: new go.Point(0,0)
       },
-      { key:"DataStore",
+      { id:-2,
+        key:"DataStore",
       source:"./../../../../assets/img/DataStore.png",
       width: 55, 
       height: 55,
-      alignmentText: new go.Spot(0.5, 1,0, 20),
+      alignmentText: new go.Spot(0.5, 1, 0, 20),
+      positionText: new go.Point(100,100),
       zOrder:0,
-      // position: new go.Point(0,0)
+    },
+    { id:-3,
+      key:"Container",
+    sourceMenu:"./../../../../assets/img/ContainerMini.png",
+    source:"./../../../../assets/img/Container.png",
+    width: 500,
+    height: 500,
+    isGroup: true,
+    alignmentText: new go.Spot(1, 1),
+    positionText: new go.Point(100,100),
+      zOrder:0
       },
-      { key:"Container",
-      sourceMenu:"./../../../../assets/img/ContainerMini.png",
-      source:"./../../../../assets/img/Container.png",
-      width: 500,
-      height: 500,
-      isGroup: true,
-      alignment: go.Spot.Center,
-      alignmentText: new go.Spot(0.5, 0.09),
+    { id:-4,
+      key:"Container 2",
+    sourceMenu:"./../../../../assets/img/ContainerMini2.png",
+    source:"./../../../../assets/img/Container2.png",
+    width: 500,
+    height: 500,
+    isGroup: true,
+    alignmentText: new go.Spot(1, 1),
+    positionText: new go.Point(100,100),
+      zOrder:0
+      },
+    { id:-5,
+      key:"User",
+    sourceMenu:"./../../../../assets/img/User.png",
+    source:"./../../../../assets/img/User.png",
+    width: 55,
+    height: 55,
+    //isGroup: true,
+    alignmentText: new go.Spot(1, 1),
+    positionText: new go.Point(0,100),
       zOrder:0
       },
     ],
@@ -67,18 +95,48 @@ export class ModelerComponent implements OnInit {
   public diagramDivClassName: string = 'myDiagramDiv';
   public paletteDivClassName = 'myPaletteDiv';
   public contenedorPaletteDivClassName = 'myContenedorPaletteDiv';
+  showJsonDiagram(){
+    console.log(this.myDiagramComponent.diagram.model.toJson());
+    console.log(this.state)
+  }
   getJsonDiagram(){
     this.cookieService.set("diagramState",this.myDiagramComponent.diagram.model.toJson());
-    //console.log(this.myDiagramComponent.diagram.model.toJson())
   }
   loadJsonDiagram(){
-   // console.log(this.cookieService.get("diagramState"))
     this.myDiagramComponent.diagram.model = go.Model.fromJson(this.cookieService.get("diagramState"));
   }
   emitJsonDiagram(){
-    this.webSocketService.emit("eventModeler",this.cookieService.get("diagramState"));
+    this.webSocketService.emitEventJsonModeler(this.myDiagramComponent.diagram.model.toJson());
+  }
+  exportJsonDiagram(){
+    //this.dataUri();
+  }
+  public updateModel(jsonDiagram:any){
+    this.myDiagramComponent.diagram.model = go.Model.fromJson(jsonDiagram);
+  }
+  public jsonObj:Object = {};
+  onFileLoad (event:any) {
+    const f = event.target.files[0];
+    const reader = new FileReader();
+    let dia = this.myDiagram;
+    var model;
+  reader.readAsText(f, 'UTF-8');
+  reader.onload = () => {
+    //console.log(fileReader.result.toString());
+    if(reader.result){
+      this.jsonObj=(JSON.parse(reader.result.toString()));
+      this.updateModel(this.jsonObj)
+    }
+
+  }
   }
   // initialize diagram / templates
+   public get dataUri(): SafeUrl {
+    
+    const jsonData = this.myDiagramComponent?.diagram?.model?.toJson();
+    const uri = 'data:application/json;charset=UTF-8,' + encodeURIComponent(jsonData);
+    return this.sanitizer.bypassSecurityTrustUrl(uri);
+  }
   public initDiagram(): go.Diagram {
 
     const $ = go.GraphObject.make;
@@ -90,10 +148,13 @@ export class ModelerComponent implements OnInit {
           nodeKeyProperty: 'id',
           linkToPortIdProperty: 'toPort',
           linkFromPortIdProperty: 'fromPort',
-          linkKeyProperty: 'key' // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
-        }
-      )
-    });
+          linkKeyProperty: 'key', // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
+          linkDataArray: new Array<go.ObjectData>(),
+          modelData: new DiagramModelData(),
+          nodeDataArray: new Array<go.ObjectData>()
+        }),
+    }
+    );
 
     const makePort = function(id: string, spot: go.Spot) {
       return $(go.Shape, 'Circle',
@@ -106,8 +167,6 @@ export class ModelerComponent implements OnInit {
       );
     }
     this.myDiagram.commandHandler.archetypeGroupData = { key: 'Group', isGroup: true };
-
-
     
     var nodeMenu =  // context menu for each Node
     $("ContextMenu",
@@ -136,18 +195,7 @@ export class ModelerComponent implements OnInit {
          $(go.TextBlock, "Rehacer"),
          { click: function(e, obj) { e.diagram.commandHandler.redo();  } }),
       );
-    var diagramMenu =  // context menu for each Node
-    $("ContextMenu",
-    $("ContextMenuButton",
-         $(go.TextBlock, "Pegar"),
-         { click: function(e, obj) { e.diagram.commandHandler.pasteSelection(e.diagram.toolManager.contextMenuTool.mouseDownPoint);  } }),
-       $("ContextMenuButton",
-         $(go.TextBlock, "Deshacer"),
-         { click: function(e, obj) { e.diagram.commandHandler.undo(); } }),
-       $("ContextMenuButton",
-         $(go.TextBlock, "Rehacer"),
-         { click: function(e, obj) { e.diagram.commandHandler.redo();  } }),
-      );
+    
 
      function changeZOrder(amt:any, obj:any, dia:any) {
         dia.commit(function(d:any) {
@@ -160,7 +208,6 @@ export class ModelerComponent implements OnInit {
 
         }, 'modified zOrder');
       }
-    //dia.contextMenu = myContextMenu;
     // define the Node template
     this.myDiagram.nodeTemplate =
       $(go.Node, 'Spot',
@@ -177,7 +224,6 @@ export class ModelerComponent implements OnInit {
             obj.findPort("TopLeft").opacity = 1;
             obj.findPort("BottomLeft").opacity = 1;
             obj.findPort("BottomRight").opacity = 1;
-            //console.log(obj.ports)
            },
           selectionChanged: function(part:any) {
               var shape = part.elt(0);
@@ -195,8 +241,7 @@ export class ModelerComponent implements OnInit {
         new go.Binding("zOrder"),
          
         new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-        // new go.Binding("loc","position"),
-          $(go.Panel,  'Spot',
+          $(go.Panel,  'Vertical',
             $(go.Picture, {name:"nodePicture", alignment: go.Spot.Center, imageStretch: go.GraphObject.Fill }, 
                 new go.Binding("source", "source").makeTwoWay(),
                 new go.Binding("width").makeTwoWay(),
@@ -206,7 +251,6 @@ export class ModelerComponent implements OnInit {
             $(go.TextBlock, 
               { margin: 8, editable: true },
                 new go.Binding('text','key').makeTwoWay(),
-                new go.Binding('alignment','alignmentText').makeTwoWay()
             ),
           ),
         // Ports
@@ -236,22 +280,20 @@ export class ModelerComponent implements OnInit {
         },
         new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
         new go.Binding("zOrder"),
-          $(go.Panel,  'Spot',
-            $(go.Picture, { name: "containerPicture", alignment: go.Spot.Center, imageStretch: go.GraphObject.Fill }, 
+          $(go.Panel, go.Panel.Spot,
+            $(go.Picture, { name: "containerPicture", imageStretch: go.GraphObject.Fill }, 
                 new go.Binding("source", "source").makeTwoWay(),
                  new go.Binding("width").makeTwoWay(),
                  new go.Binding("height").makeTwoWay(),
                 new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify)
               ), 
                 $(go.TextBlock, 
-                  { margin: 8, editable: true },
-                    new go.Binding('text','key').makeTwoWay(),
-                    new go.Binding('alignment','alignmentText').makeTwoWay()
+                  { margin: 8, editable: true, alignment: new go.Spot(0.5, 0.09) },
+                    new go.Binding('text','key').makeTwoWay()
                 ),
           )
         );
-
-        this.myDiagram.contextMenu = diagramMenu;
+        this.myDiagram.contextMenu = nodeMenu;
     return this.myDiagram;
   }
 
@@ -262,22 +304,27 @@ export class ModelerComponent implements OnInit {
       // set skipsDiagramUpdate: true since GoJS already has this update
       // this way, we don't log an unneeded transaction in the Diagram's undoManager history
       draft.skipsDiagramUpdate = true;
-      // DataSyncService.syncNodeData(changes, draft.diagramNodeData, appComp.observedDiagram.model).every(objectData =>{
-      //   // draft.diagramNodeData.push(objectData);
-      //   console.log(objectData);
-      //   //console.log(this.state)
-      // });
       
-      //console.log(draft.diagramNodeData);
-      // draft.diagramLinkData = DataSyncService.syncLinkData(changes, draft.diagramLinkData, appComp.observedDiagram.model);
-      // draft.diagramModelData = DataSyncService.syncModelData(changes, draft.diagramModelData);
-      
-      
-      
-      // draft.diagramNodeData = DataSyncService.syncNodeData(changes, draft.diagramNodeData, appComp.observedDiagram.model);
-      // draft.diagramLinkData = DataSyncService.syncLinkData(changes, draft.diagramLinkData, appComp.observedDiagram.model);
-      // draft.diagramModelData = DataSyncService.syncModelData(changes, draft.diagramModelData);
+
+      draft.diagramNodeData = DataSyncService.syncNodeData(changes, draft.diagramNodeData, appComp.observedDiagram.model);
+      draft.diagramLinkData = DataSyncService.syncLinkData(changes, draft.diagramLinkData, appComp.observedDiagram.model);
+      draft.diagramModelData = DataSyncService.syncModelData(changes, draft.diagramModelData);
+      //console.log(changes)
     });
+    this.myDiagramComponent.diagram.model.mergeNodeDataArray(this.state.diagramNodeData);
+  };
+
+  // When the diagram model changes, update app data to reflect those changes. Be sure to use immer's "produce" function to preserve immutability
+  public diagramJsonModelChange = (changes: string) => {
+    // const appComp = this;
+    // this.state = produce(this.state, draft => {
+    //   // set skipsDiagramUpdate: true since GoJS already has this update
+    //   // this way, we don't log an unneeded transaction in the Diagram's undoManager history
+    //   draft.skipsDiagramUpdate = true;
+    // });
+    //this.myDiagramComponent.diagram.model.mergeNodeDataArray(this.state.diagramNodeData);
+    //console.log(changes);
+    this.myDiagramComponent.diagram.model.applyIncrementalJson(changes);
   };
 
   public initPalette(): go.Palette {
@@ -285,13 +332,11 @@ export class ModelerComponent implements OnInit {
     const palette = $(go.Palette);
       palette.nodeTemplate =  
         $(go.Part, 'Vertical',
-        //{contextMenu:myContextMenu}
             $(go.Picture, { alignment: go.Spot.Center, width: 55, height: 55 , imageStretch: go.GraphObject.Fill },
               new go.Binding("source").makeTwoWay()
             ),
             $(go.TextBlock, { margin: 8, editable: true },
               new go.Binding('text','key').makeTwoWay(),
-              new go.Binding('position','positionText').makeTwoWay()
             )
       )      
       
@@ -302,17 +347,14 @@ export class ModelerComponent implements OnInit {
             resizable: true,
             resizeObjectName: "Picture" },
           new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-            $(go.Panel,  'Spot',
+            $(go.Panel, go.Panel.Vertical,
               $(go.Picture, { name: "Picture", width: 55, height: 55 , imageStretch: go.GraphObject.Fill}, 
                   new go.Binding("source","sourceMenu").makeTwoWay(),
-                  // new go.Binding("width").makeTwoWay(),
-                  // new go.Binding("height").makeTwoWay(),
                   new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify)
                 ), 
                   $(go.TextBlock, 
                     { margin: 8, editable: true },
                       new go.Binding('text','key').makeTwoWay(),
-                      new go.Binding('alignment','alignmentText').makeTwoWay()
                   ),
             )
           );
@@ -322,29 +364,38 @@ export class ModelerComponent implements OnInit {
   }
   
   roomModeler: string = '';
-  constructor(private cdr: ChangeDetectorRef,  private webSocketService: ModelerWebSocketService, private router: ActivatedRoute, private cookieService: CookieService ) {
+  constructor(private cdr: ChangeDetectorRef,  private webSocketService: ModelerWebSocketService, private router: ActivatedRoute, private cookieService: CookieService, private sanitizer:DomSanitizer ) {
 
-    this.webSocketService.connect();
-    this.webSocketService.callback.subscribe(res=>{
-      //console.log(res);
-      //this.writeSingle(prevPos,false);
-      this.loadDiagramFromServer(res, false)
+    //this.webSocketService.connect();
+    this.webSocketService.callback.subscribe(res => {
+      if(typeof(res) == "string"){
+
+        this.loadDiagramJsonFromServer(res, false);
+      }else{
+
+        this.loadDiagramFromServer(res, false);
+      }
+
+
     })
    }
    ngOnInit(): void {
     this.roomModeler = this.router.snapshot.paramMap.get('room') as string;
-
-    //console.log(this.roomModeler)
     this.cookieService.set('roomModeler', this.roomModeler);
   }
 
-  private loadDiagramFromServer = (prevData: any, emit: boolean = true) => {
+  private loadDiagramFromServer = (prevData: go.IncrementalData, emit: boolean = true) => {
     if(emit){
-      this.webSocketService.emitEventModeler({ prevData } );
+      this.webSocketService.emitEventModeler( prevData );
     }else{
-      this.myDiagramComponent.diagram.model = go.Model.fromJson(prevData);
-      //this.myDiagramComponent.diagram.isModified = false;
-      // this.myDiagramComponent.diagram.model.
+      this.diagramModelChange(prevData);
+    }
+  }
+  private loadDiagramJsonFromServer = (prevData: string, emit: boolean = true) => {
+    if(emit){
+      this.webSocketService.emitEventJsonModeler( prevData );
+    }else{
+      this.diagramJsonModelChange(prevData);
     }
   }
 
@@ -365,83 +416,19 @@ export class ModelerComponent implements OnInit {
     this.observedDiagram = this.myDiagramComponent.diagram;
     this.cdr.detectChanges(); // IMPORTANT: without this, Angular will throw ExpressionChangedAfterItHasBeenCheckedError (dev mode only)
 
-    const appComp: ModelerComponent = this;
-    // listener for inspector
-    this.myDiagramComponent.diagram.addDiagramListener('ChangedSelection', (e) => {
-      if (e.diagram.selection.count === 0) {
-        appComp.selectedNodeData = null;
+    this.myDiagramComponent.diagram.addModelChangedListener((evt)=>{
+      if (!evt.isTransactionFinished) return;
+      if(evt.model){
+        if(evt.getValue(true) == "Linking" || evt.getValue(true) == "Relinking" ){
+        var incrementalJson = evt.model.toIncrementalJson(evt);
+        this.loadDiagramJsonFromServer(incrementalJson, true);
+        }else{
+          var incrementalData = evt.model.toIncrementalData(evt);
+          this.loadDiagramFromServer(incrementalData, true);
+        }
+        
+      
       }
-      const node = e.diagram.selection.first();
-      appComp.state = produce(appComp.state, draft => {
-        // console.log(draft.diagramNodeData.length);
-        // console.log(draft.diagramLinkData.length);
-        // console.log(draft.diagramModelData.prop);
-        // if (node instanceof go.Node) {
-        //   console.log(draft.diagramNodeData);
-        //   console.log(node);
-        //   // var idx = draft.diagramNodeData.findIndex(nd => nd.id == node.data.id);
-        //   // var nd = draft.diagramNodeData[idx];
-        //   // draft.selectedNodeData = nd;
-        // } else {
-        //   draft.selectedNodeData = {id:'',text:'',color:''};
-        // }
-      });
-    });
-
-    // listener for modified
-// this.myDiagramComponent.diagram.addDiagramListener('SelectionMoved', (e) =>{
-//   console.log(e);
-// });
-// this.myDiagramComponent.diagram.addChangedListener((e) =>{
-//   //console.log(e.diagram?.model.toIncrementalJson(e))
-//   //if (e.modelChange !== "nodeDataArray") return;
-//  // console.log(e.propertyName);
-//   // if(e.propertyName == "data"){
-//     //console.log(e.getValue(false))
-//     // console.log(e.diagram.)
-//     //console.log({old:e.oldValue});
-//     //console.log({new:e.newValue});
-  
-//   //  if(e.propertyName == "location"){
-//   //    console.log(e.getValue(false))
-//   //  }
-//   //  if(e.propertyName == "position"){
-//   //    console.log(e.getValue(false))
-//   //  }
-// });
-this.myDiagramComponent.diagram.addModelChangedListener((evt)=>{
-  
-  if (!evt.isTransactionFinished) return;
-  if(evt.model){
-    var json = evt.model.toJson();
-    //console.log(json)
-    //this.webSocketService.emit("eventModeler",json);
-  }
-  // if (!evt.isTransactionFinished) return;
-  // var txn = evt.object;  // a Transaction
-  // if (txn === null) return;
-  // // ignore unimportant Transaction events
-  // if (!evt.isTransactionFinished) return;
-  // var txn = evt.object;  // a Transaction
-  // if (txn === null) return;
-  // // iterate over all of the actual ChangedEvents of the Transaction
-  // txn.changes.each(function(e:any) {
-  //   // record node insertions and removals
-  //   if (e.change === go.ChangedEvent.Property) {
-  //     if (e.modelChange === "linkFromKey") {
-  //       console.log(evt.propertyName + " changed From key of link: " +
-  //                   e.object + " from: " + e.oldValue + " to: " + e.newValue);
-  //     } else if (e.modelChange === "linkToKey") {
-  //       console.log(evt.propertyName + " changed To key of link: " +
-  //                   e.object + " from: " + e.oldValue + " to: " + e.newValue);
-  //     }
-  //   } else if (e.change === go.ChangedEvent.Insert && e.modelChange === "linkDataArray") {
-  //     console.log(evt.propertyName + " added link: " + e.newValue);
-  //   } else if (e.change === go.ChangedEvent.Remove && e.modelChange === "linkDataArray") {
-  //     console.log(evt.propertyName + " removed link: " + e.oldValue);
-  //   }
-  // });
-  
 })
 
 // window.addEventListener('DOMContentLoaded', this.initDiagram);
@@ -453,29 +440,7 @@ this.myDiagramComponent.diagram.addModelChangedListener((evt)=>{
    * @param changedPropAndVal An object with 2 entries: "prop" (the node data prop changed), and "newVal" (the value the user entered in the inspector <input>)
    */
   public handleInspectorChange(changedPropAndVal: { prop: any; newVal: any; }) {
-    // console.log(changedPropAndVal.prop);
-    // console.log(changedPropAndVal.newVal);
-
-
-
-
-
-
-
-
-    // const path = changedPropAndVal.prop;
-    // const value = changedPropAndVal.newVal;
-
-    // this.state = produce(this.state, draft => {
-    //   var data = draft.selectedNodeData;
-    //   data[path] = value;
-    //   const key = data.id;
-    //   const idx = draft.diagramNodeData.findIndex(nd => nd.id == key);
-    //   if (idx >= 0) {
-    //     draft.diagramNodeData[idx] = data;
-    //     draft.skipsDiagramUpdate = false; // we need to sync GoJS data with this new app state, so do not skips Diagram update
-    //   }
-    // });
+    
   }
 
 }

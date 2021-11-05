@@ -2,15 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 // app.use(cors());
-const server = require('http').Server(app)
+const server = require('https').createServer()
 const io = require('socket.io')(server,{
     cors:{
-        origins:'http://localhost:4200',
-        methods: ["GET", "POST"]
+        origins:'https://cold.magios.org:* http://localhost:4200*',
+         //origins:'*',
+        methods: ["GET", "POST", "OPTIONS", "HEAD", "PUT", "PATCH", "DELETE"],
+        credentials:true
     }
     
-});
-
+}, {transports: ['websocket']});
 io.on('connection', (socket) => {
     const idHandShake = socket.id;
     const { nameRoom } = socket.handshake.query;
@@ -30,10 +31,14 @@ io.on('connection', (socket) => {
         const data = res;
         socket.to(nameRoom).emit('eventModeler', data);
     })
+    socket.on('eventJsonModeler',(res)=>{
+        const data = res;
+        socket.to(nameRoom).emit('eventJsonModeler', data);
+    })
 
 })
 
-server.listen(5000,()=>{
+server.listen(3000,()=>{
     console.log(">> Socket listo y escuchando por el puerto: 5000")
 })
 
